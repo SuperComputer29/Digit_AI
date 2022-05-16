@@ -54,9 +54,13 @@ def softmax_derivative(x):
 
 def delistify(a): # Converts a single element list into a string containing that element
     if len(a) == 1:
-        return a[0]
+        return np.array(a[0])
     else:
         return "it's not a single element list ;-;"
+
+def listify(a): # Converts an element into an array containing that element
+    return np.array([a])
+
 w1, w2, b1, b2 = init_weights_and_biases()
 
 
@@ -103,8 +107,8 @@ def info(): # spits out information regarding the NN and also help you maintain 
 def back_prop(): # Back propogation
     O = outputs
     a = training_data
-    epochs = 1342
-    learning_rate = 0.01
+    epochs = 1000
+    learning_rate = 0.1
     
     def cost_constant(e):
         return -2*sum(O[e - 1])
@@ -140,8 +144,7 @@ def back_prop(): # Back propogation
             return 2*delistify(softmax_derivative(z[e - 1].dot(w2) + b2.T))[0] - 2*cost_constant(e)
         else:
             return 2*delistify(softmax_derivative(z[e - 1].dot(w2) + b2.T))[1] - 2*cost_constant(e)
-    
-   
+
 
     for e in range(n):
         for i in range(epochs):
@@ -160,20 +163,23 @@ def back_prop(): # Back propogation
             front_prop(w1, w2, b1, b2)
             B1 = b1
             b1_adjustments = np.array([learning_rate*dCdb1(b + 1, e + 1) for b in range(z_len)])
-            B1 = np.subtract(B1, b1_adjustments)
+
+            B1 = np.subtract(delistify(B1.T), b1_adjustments)
         
         for i in range(epochs):
             front_prop(w1, w2, b1, b2)
             B2 = b2
             b2_adjustments = np.array([learning_rate*dCdb2(b + 1, e + 1) for b in range(A_len)])
-            B2 = np.subtract(B1, b2_adjustments)    
+            B2 = np.subtract(delistify(B2.T), b2_adjustments)    
 
-    print(W1)
-    print(W2)
-    print(B1)
-    print(B2)
+    
+    Z, A_new = front_prop(W1, W2, listify(B1).T, listify(B2).T)
+    
+    return W1, W2, B1, B2, A_new
 
+W1, W2, B1, B2, A_new = back_prop()
 
-
-back_prop()
-
+print(W1)
+print(W2)
+print(B1)
+print(B2)

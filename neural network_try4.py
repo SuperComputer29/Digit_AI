@@ -23,6 +23,7 @@ def init_weights_and_biases():
     
     return weights1, weights2, bias1, bias2
 
+
 def sigmoid(x): # The first activation function that transforms the dot product into the hidden layer
     return 1/(1 + np.exp(-x))
 
@@ -32,20 +33,23 @@ def sigmoid_derivative(x): # The derivative of the sigmoid function
 
 
 def softmax(x): # The second activation function
-    exp_x = []
-    for i in range(len(x)):
-        exp_x.append(np.exp(x[i]))
+    exp_vector = np.exp(x)
+    sm_vector = []
 
-    return np.array([np.exp(x[i])/sum(exp_x) for i in range(len(x))])
+    for i in range(len(exp_vector)):
+        sm_vector.append(exp_vector[i]/np.sum(exp_vector))
+
+    return np.array(sm_vector)
 
 
 def softmax_derivative(x):
-    nx = len(x)
-    one_vector = []
-    for i in range(nx):
-        one_vector.append(1)
-    one_vector = np.array(one_vector)
-    return softmax(x).dot(np.subtract(1, softmax(x)))
+   sm_vector = softmax(x)
+   sm_vector_derivative = []
+
+   for i in range(len(sm_vector)):
+       sm_vector_derivative.append(sm_vector[i]*(1 - sm_vector[i]))
+
+   return np.array(sm_vector_derivative)
 
 
 def delistify(a): # Converts a single element list into a string containing that element
@@ -53,7 +57,6 @@ def delistify(a): # Converts a single element list into a string containing that
         return a[0]
     else:
         return "it's not a single element list ;-;"
-
 w1, w2, b1, b2 = init_weights_and_biases()
 
 
@@ -64,11 +67,10 @@ def front_prop(): # Front propogation
     # then put A through the softmax function to get the correct A matrix
     A = np.array([softmax(i +  delistify(b2.T)) for i in z.dot(w2.T)])
     return z, A
-
 z, A = front_prop() 
 
 
-def info(): # I'll spit out information regarding the NN and also help you maintain your sanity
+def info(): # spits out information regarding the NN and also help you maintain your sanity
     print("    a      ")
     print("                  ")
     print(training_data)
@@ -97,56 +99,77 @@ def info(): # I'll spit out information regarding the NN and also help you maint
     print("                  ")
     print(A) 
 
+
 def back_prop(): # Back propogation
     O = outputs
     a = training_data
-    cost2 = np.average([sum(i) for i in np.square(np.subtract(O, A))])
     epochs = 1
-    learning_rate = 0.1
+    learning_rate = 131
+    
+    def cost_constant(e):
+        return -2*sum(O[e - 1])
+    
+    A_inner_dx = np.array([w2[i][1]*sigmoid_derivative(delistify(a[1].dot(w1[1]) + b1[1]))*a[1][1] for i in range(A_len)])
+    dAdw1 = softmax_derivative(z[1].dot(w2) + b2.T)
+    
+    
+    def dCdw1(b, c, e): # e stands for example!!!
+        A_inner_dx = np.array([w2[i][b - 1]*sigmoid_derivative(delistify(a[e - 1].dot(w1[b - 1]) + b1[b - 1]))*a[e - 1][c - 1] for i in range(A_len)])
+        dAdw1 = delistify(softmax_derivative(z[e - 1].dot(w2) + b2.T))
+        derivative = dAdw1.dot(A_inner_dx)
 
-    # vectors
+        print(A_inner_dx)
+        return 2*derivative - 2*cost_constant(e)
 
-    # w1_v = w1.reshape([a_len*z_len, 1])
-    # w2_v = w1.reshape([z_len*A_len, 1])
-    # b1_v = b1
-    # w1_v = b2
-
-    def w1(b, c, example):
-        return -2*(O-A)*softmax_derivative(z[example].dot(w2) + b2)*w1[b][c]*sigmoid_derivative(a[example].dot(w1) + b1)*w1[b][c]
-
-
-    def w2(b, c, example):
-        return -2*(O-A)*softmax_derivative(z[example].dot(w2) + b2)*w2[b][c]
+    
+    def dCdw2(b, c, e):
+        if b == 1:
+            return 2*delistify(softmax_derivative(z[e - 1].dot(w2) + b2.T))[0]*z[e - 1][c - 1] - 2*cost_constant(e)
+        elif b == 2:
+            return 2*delistify(softmax_derivative(z[e - 1].dot(w2) + b2.T))[1]*z[e - 1][c - 1] - 2*cost_constant(e) 
 
 
-    def b1(b, example):
-        return -2*(O-A)*softmax_derivative(z[example].dot(w2) + b2)[b]*sigmoid_derivative(a[example].dot(w1[b]) + b1[b])
+    def dCdb1(b, e):
+        if b == 1:
+            return 2*delistify(softmax_derivative(z[e - 1].dot(w2) + b2.T))[0] - 2*cost_constant(e)
+        elif b == 2:
+            return 2*delistify(softmax_derivative(z[e - 1].dot(w2) + b2.T))[1] - 2*cost_constant(e)               
+    
+    
+    def dCdb2(b, e):
+        if b == 1:
+            return 2*delistify(softmax_derivative(z[e - 1].dot(w2) + b2.T))[0] - 2*cost_constant(e)
+        else:
+            return 2*delistify(softmax_derivative(z[e - 1].dot(w2) + b2.T))[1] - 2*cost_constant(e)
+    
+   
 
-
-    def b2(b, example):
-        return -2*(O-A)*softmax_derivative(z[example].dot(w2) + b2)[b]
+    # for e in range(n):
+    #     for i in range(epochs):
+    #         front_prop()
+    #         W1 = w1
+    #         w1_adjustments = np.array([[learning_rate*dCdw1(b + 1, c + 1, e + 1) for c in range(a_len)] for b in range(z_len)])
+    #         W1 = np.subtract(W1, w1_adjustments)
+            
+    #     for i in range(epochs):
+    #         front_prop()
+    #         W2 = w2
+    #         w2_adjustments = np.array([[learning_rate*dCdw2(b + 1, c + 1, e + 1) for c in range(z_len)] for b in range(A_len)])
+    #         W2 = np.subtract(W2, w2_adjustments)
+            
+    #     for i in range(epochs):
+    #         front_prop()
+    #         B1 = b1
+    #         b1_adjustments = np.array([learning_rate*dCdb1(b + 1, e + 1) for b in range(z_len)])
+    #         B1 = np.subtract(B1, b1_adjustments)
         
+    #     for i in range(epochs):
+    #         front_prop()
+    #         B2 = b2
+    #         b2_adjustments = np.array([learning_rate*dCdb2(b + 1, e + 1) for b in range(A_len)])
+    #         B2 = np.subtract(B1, b2_adjustments)    
 
-    for k in range(epochs): # i is already taken :(
-        for example in range(n):
-            front_prop()
-            w1_change = [[w1(i, j, example) for j in range(a_len)] for i in range(z_len)]
-            w2_change = [[w2(i, j, example) for j in range(z_len)] for i in range(A_len)]
-            b1_change = [b1[i, example] for i in range(z_len)]
-            b2_change = [b2[i, example] for i in range(A_len)]
+    
 
-            w1 -= learning_rate*w1_change
-            w2 -= learning_rate*w2_change
-            b1 -= learning_rate*b1_change
-            b2 -= learning_rate*b2_change
+back_prop()
 
-        
-    return w1, w2, b1, b2
-
-W1, W2, B1, B2 = back_prop()
-
-
-
-
-
- 

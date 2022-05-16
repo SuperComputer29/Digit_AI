@@ -60,14 +60,14 @@ def delistify(a): # Converts a single element list into a string containing that
 w1, w2, b1, b2 = init_weights_and_biases()
 
 
-def front_prop(): # Front propogation
+def front_prop(w_1, w_2, b_1, b_2): # Front propogation
     a = training_data
-    z = np.array([[sigmoid(i[j] + b1[j][0]) for j in range(z_len)] for i in a.dot(w1.T)])
+    z = np.array([[sigmoid(i[j] + b_1[j][0]) for j in range(z_len)] for i in a.dot(w_1.T)])
     # first compute A without putting it through the softmax function
     # then put A through the softmax function to get the correct A matrix
-    A = np.array([softmax(i +  delistify(b2.T)) for i in z.dot(w2.T)])
+    A = np.array([softmax(i +  delistify(b_2.T)) for i in z.dot(w_2.T)])
     return z, A
-z, A = front_prop() 
+z, A = front_prop(w1, w2, b1, b2) 
 
 
 def info(): # spits out information regarding the NN and also help you maintain your sanity
@@ -103,8 +103,8 @@ def info(): # spits out information regarding the NN and also help you maintain 
 def back_prop(): # Back propogation
     O = outputs
     a = training_data
-    epochs = 1
-    learning_rate = 131
+    epochs = 1342
+    learning_rate = 0.01
     
     def cost_constant(e):
         return -2*sum(O[e - 1])
@@ -118,7 +118,6 @@ def back_prop(): # Back propogation
         dAdw1 = delistify(softmax_derivative(z[e - 1].dot(w2) + b2.T))
         derivative = dAdw1.dot(A_inner_dx)
 
-        print(A_inner_dx)
         return 2*derivative - 2*cost_constant(e)
 
     
@@ -144,32 +143,37 @@ def back_prop(): # Back propogation
     
    
 
-    # for e in range(n):
-    #     for i in range(epochs):
-    #         front_prop()
-    #         W1 = w1
-    #         w1_adjustments = np.array([[learning_rate*dCdw1(b + 1, c + 1, e + 1) for c in range(a_len)] for b in range(z_len)])
-    #         W1 = np.subtract(W1, w1_adjustments)
+    for e in range(n):
+        for i in range(epochs):
+            front_prop(w1, w2, b1, b2)
+            W1 = w1
+            w1_adjustments = np.array([[learning_rate*dCdw1(b + 1, c + 1, e + 1) for c in range(a_len)] for b in range(z_len)])
+            W1 = np.subtract(W1, w1_adjustments)
             
-    #     for i in range(epochs):
-    #         front_prop()
-    #         W2 = w2
-    #         w2_adjustments = np.array([[learning_rate*dCdw2(b + 1, c + 1, e + 1) for c in range(z_len)] for b in range(A_len)])
-    #         W2 = np.subtract(W2, w2_adjustments)
+        for i in range(epochs):
+            front_prop(w1, w2, b1, b2)
+            W2 = w2
+            w2_adjustments = np.array([[learning_rate*dCdw2(b + 1, c + 1, e + 1) for c in range(z_len)] for b in range(A_len)])
+            W2 = np.subtract(W2, w2_adjustments)
             
-    #     for i in range(epochs):
-    #         front_prop()
-    #         B1 = b1
-    #         b1_adjustments = np.array([learning_rate*dCdb1(b + 1, e + 1) for b in range(z_len)])
-    #         B1 = np.subtract(B1, b1_adjustments)
+        for i in range(epochs):
+            front_prop(w1, w2, b1, b2)
+            B1 = b1
+            b1_adjustments = np.array([learning_rate*dCdb1(b + 1, e + 1) for b in range(z_len)])
+            B1 = np.subtract(B1, b1_adjustments)
         
-    #     for i in range(epochs):
-    #         front_prop()
-    #         B2 = b2
-    #         b2_adjustments = np.array([learning_rate*dCdb2(b + 1, e + 1) for b in range(A_len)])
-    #         B2 = np.subtract(B1, b2_adjustments)    
+        for i in range(epochs):
+            front_prop(w1, w2, b1, b2)
+            B2 = b2
+            b2_adjustments = np.array([learning_rate*dCdb2(b + 1, e + 1) for b in range(A_len)])
+            B2 = np.subtract(B1, b2_adjustments)    
 
-    
+    print(W1)
+    print(W2)
+    print(B1)
+    print(B2)
+
+
 
 back_prop()
 

@@ -1,4 +1,0 @@
-What I'm doing 
-
-I'm taking the cost of the all the training examples, averaging them out and then finding the negative gradient for the back propogation
-

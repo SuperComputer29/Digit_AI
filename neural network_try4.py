@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as np 
 
 
 # A self inflicting journey of me continiously forgetting again and again countless times to account for the biases of this network.
@@ -9,7 +9,7 @@ training_data = np.array([[0, 1, 0], [1, 0, 1], [0, 1, 1], [1, 1, 1], [1, 0, 0],
 outputs = np.array([[1, 0], [1, 0], [0, 1], [0, 1], [1, 0], [1, 0]])
 
 a_len = len(training_data[0]) # Number of input neruons
-z_len = 2 # Number of hidden layer neurons
+z_len = 2 # Number ef hidden layer neurons
 A_len = 2 # Number of output layer neurons
 n = len(training_data) # Number of training examples
 o_len = len(outputs[0]) # Number of expected outputs
@@ -108,7 +108,7 @@ def back_prop(): # Back propogation
     O = outputs
     a = training_data
     epochs = 1000
-    learning_rate = 0.1
+    learning_rate = 0.01
     
     def cost_constant(e):
         return -2*sum(O[e - 1])
@@ -153,21 +153,18 @@ def back_prop(): # Back propogation
             w1_adjustments = np.array([[learning_rate*dCdw1(b + 1, c + 1, e + 1) for c in range(a_len)] for b in range(z_len)])
             W1 = np.subtract(W1, w1_adjustments)
             
-        for i in range(epochs):
-            front_prop(w1, w2, b1, b2)
+
             W2 = w2
             w2_adjustments = np.array([[learning_rate*dCdw2(b + 1, c + 1, e + 1) for c in range(z_len)] for b in range(A_len)])
             W2 = np.subtract(W2, w2_adjustments)
             
-        for i in range(epochs):
-            front_prop(w1, w2, b1, b2)
+
             B1 = b1
             b1_adjustments = np.array([learning_rate*dCdb1(b + 1, e + 1) for b in range(z_len)])
 
             B1 = np.subtract(delistify(B1.T), b1_adjustments)
         
-        for i in range(epochs):
-            front_prop(w1, w2, b1, b2)
+
             B2 = b2
             b2_adjustments = np.array([learning_rate*dCdb2(b + 1, e + 1) for b in range(A_len)])
             B2 = np.subtract(delistify(B2.T), b2_adjustments)    
@@ -179,7 +176,9 @@ def back_prop(): # Back propogation
 
 W1, W2, B1, B2, A_new = back_prop()
 
-print(W1)
-print(W2)
-print(B1)
-print(B2)
+# print(W1)
+# print(W2)
+# print(B1)
+# print(B2)
+
+print(A_new)
